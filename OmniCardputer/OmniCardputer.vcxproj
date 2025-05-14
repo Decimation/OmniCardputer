@@ -94,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.OmniCardputer.vsarduino.h" />
+    <ClInclude Include="__vm\OmniCardputer.h" />
   </ItemGroup>
   <PropertyGroup>
     <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>
@@ -117,6 +118,9 @@
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <PreprocessorDefinitions>_VMICRO_INTELLISENSE;__ESP32_esp32s3__;__ESP32_ESP32S3__;_VMDEBUG=1;HAVE_CONFIG_H;MBEDTLS_CONFIG_FILE=mbedtls/esp_config.h;UNITY_INCLUDE_CONFIG_H;WITH_POSIX;_GNU_SOURCE;IDF_VER=v4.4.6-dirty;ESP_PLATFORM;_POSIX_READER_WRITER_LOCKS;F_CPU=240000000L;ARDUINO=108010;ARDUINO_M5STACK_CARDPUTER;ARDUINO_ARCH_ESP32;ARDUINO_BOARD=M5STACK_CARDPUTER;ARDUINO_VARIANT=m5stack_cardputer;ARDUINO_PARTITION_default;ESP32;CORE_DEBUG_LEVEL=0;ARDUINO_RUNNING_CORE=1;ARDUINO_EVENT_RUNNING_CORE=1;ARDUINO_USB_MODE=1;ARDUINO_USB_CDC_ON_BOOT=1;ARDUINO_USB_MSC_ON_BOOT=0;ARDUINO_USB_DFU_ON_BOOT=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile />
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

@@ -8,6 +8,7 @@
 // ReSharper disable CppDeclaratorNeverUsed
 // #include <ArduinoHttpClient.h>
 
+
 #include <M5Unit-CatM.h>
 #include <string>
 #define TINY_GSM_DEBUG SerialMon
@@ -20,7 +21,7 @@
 // #include <M5_SIM7080G.h>
 #include <M5Cardputer.h>
 #include <iterator>
-
+#include <functional>
 #ifdef DUMP_AT_COMMANDS
 #include <StreamDebugger.h>
 StreamDebugger g_dbg(SerialAT, SerialMon);
@@ -29,15 +30,25 @@ TinyGsm        g_modem(g_dbg);
 TinyGsm g_modem(SerialAT);
 #endif
 
+#include <esp_task.h>
+#include "esp_task_wdt.h"
+
+
 IPAddress g_host{206, 196, 32, 11};
 
 TinyGsmClient g_gsmClient(g_modem);
 // HttpClient    g_http{g_gsmClient, g_host, 22000};
 
+enum class Option
+{
+	NONE = 0,
+	SMS  = 1,
+	Num  = 2,
+};
 
-static bool g_smsMode = false;
+static Option g_optMode = Option::NONE;
 
-static const String g_myNumber{"6127876708"} PROGMEM;
+static String g_myNumber{"6127876708"};
 
 String g_strBuf{};
 
@@ -67,6 +78,7 @@ void setup()
 	SerialMon.println("Starting");
 
 	clear(g_strBuf, '\0');
+	g_strBuf.clear();
 
 	delay(300);
 
@@ -122,6 +134,87 @@ void setup()
 	}
 }
 
+static void displayStringInput(String& sz)
+{
+	SerialMon.printf("[%s] [%d]\n", sz.c_str(), sz.length());
+
+	M5Cardputer.Display.clearDisplay();
+	M5.Display.setCursor(0, 0, 2);
+	M5Cardputer.Display.printf(">%s\n", sz.c_str());
+	// M5Cardputer.Display.println(g_strBuf);
+}
+
+static bool readInput(String& sz)
+{
+	// const char* msg;
+	// buf = {};
+
+	// bool display  = true;
+	bool ret = true;
+	M5Cardputer.Display.setTextColor(lgfx::colors::TFT_BLUE);
+
+	do {
+		M5Cardputer.update();
+
+		auto state    = M5Cardputer.Keyboard.keysState();
+		bool isChange = M5Cardputer.Keyboard.isChange();
+
+		if (!isChange) {
+			continue;
+		}
+		if (state.fn && M5Cardputer.Keyboard.isKeyPressed('q')) {
+			ret = false;
+			break;
+		}
+
+		if (state.del) {
+			unsigned li = sz.length() - 1;
+			if (li >= 0) {
+				sz.remove(li);
+			}
+		} else if (state.enter) {
+			M5Cardputer.Display.setTextColor(lgfx::colors::TFT_GREEN);
+			displayStringInput(sz);
+
+			// g_strBuf.clear();
+
+			// g_optMode = Option::NONE;
+
+			// return;
+
+			ret = true;
+			break;
+		} else {
+			// M5Cardputer.Display.clear();
+
+			auto word = state.word;
+
+			if (word.size() < 1) {
+				continue;
+			}
+
+			for (uint8_t i = 0; i < word.size(); i++) {
+				sz.concat(word[i]);
+			}
+
+			SerialMon.printf("[%p] [%s][%d]\n", word.data(), word.data(), word.size());
+		}
+
+
+		// std::copy(word.begin(), word.end(), g_strBuf);
+		M5Cardputer.Keyboard.updateKeysState();
+		displayStringInput(sz);
+
+		delay(100);
+
+		// break;
+	}
+	while (true);
+
+	return ret;
+	// state.reset();
+}
+
 
 void loop()
 {
@@ -131,64 +224,98 @@ void loop()
 
 	auto state    = M5Cardputer.Keyboard.keysState();
 	bool isChange = M5Cardputer.Keyboard.isChange();
+	// bool display  = true;
+
+	/*switch (g_optMode) {
+		case Option::SMS:
+			{
+				if (!isChange) {
+					break;
+				}
+
+				// msg = state.word.data();
+				// msg = state.word.data();
 
 
-	if (g_smsMode && isChange) {
-		// msg = state.word.data();
-		// msg = state.word.data();
+				if (state.del) {
+					unsigned li = g_strBuf.length() - 1;
+					if (li >= 0) {
+						g_strBuf.remove(li);
+					}
+				} else if (state.enter) {
+					// M5Cardputer.Display.clear();
+					// state.reset();
 
-		auto word = state.word;
+					// M5Cardputer.Display.println(g_strBuf);
+					M5Cardputer.Display.setTextColor(lgfx::colors::TFT_GREEN);
 
-		if (state.enter) {
-			// M5Cardputer.Display.clear();
-			// state.reset();
+					g_modem.sendSMS(g_myNumber, g_strBuf);
+					g_strBuf.clear();
 
-			M5Cardputer.Display.println(g_strBuf);
-			// M5Cardputer.Display.println(buf);
+					g_optMode = Option::NONE;
 
-			g_modem.sendSMS(g_myNumber, g_strBuf);
+					// return;
+				} else {
+					// M5Cardputer.Display.clear();
 
-			g_smsMode = false;
-			return;
-		} else {
-			// M5Cardputer.Display.clear();
-		}
+					auto word = state.word;
 
-		/*auto l = M5Cardputer.Keyboard.keyList();
+					if (word.size() < 1) {
+						return;
+					}
 
-		for (auto k = l.begin(); k != l.end(); k++) {
-			auto kv = M5Cardputer.Keyboard.getKeyValue(*k);
-			if (M5Cardputer.Keyboard.isKeyPressed(kv.value_first)) {
-				g_strBuf.concat(kv.value_first);
+					for (uint8_t i = 0; i < word.size(); i++) {
+						g_strBuf.concat(word[i]);
+					}
+
+					SerialMon.printf("[%p] [%s][%d]\n", word.data(), word.data(), word.size());
+				}
+
+
+				// std::copy(word.begin(), word.end(), g_strBuf);
+				displayMessage();
+				break;
 			}
-		}*/
 
-		if (!(word.size() >= 1)) {
-			return;
+		default:
+			{
+				if (state.fn) {
+					if (M5Cardputer.Keyboard.isKeyPressed('s')) {
+						g_optMode = Option::SMS;
+						M5Cardputer.Display.setTextColor(lgfx::colors::TFT_BLUE);
+					}
+				}
+			}
+			break;
+	}*/
+
+	if (state.fn) {
+		if (M5Cardputer.Keyboard.isKeyPressed('s')) {
+			g_optMode = Option::SMS;
+
+
+			auto b = readInput(g_strBuf);
+			if (b) {
+				g_modem.sendSMS(g_myNumber, g_strBuf);
+				g_strBuf.clear();
+				M5Cardputer.Display.clearDisplay();
+			}
 		}
+		else if (M5Cardputer.Keyboard.isKeyPressed('n')) {
+			g_optMode = Option::SMS;
 
-		SerialMon.printf("[%p] [%s][%d]\n", word.data(), word.data(), word.size());
+			// g_myNumber.clear();
 
-		for (uint8_t i = 0; i < word.size(); i++) {
-			g_strBuf.concat(word[i]);
+			auto b = readInput(g_myNumber);
+			if (b) {
+				M5Cardputer.Display.printf("Set number to %s\n", g_myNumber.c_str());
+				delay(1000);
+				M5Cardputer.Display.clearDisplay();
+			}
 		}
-
-		// std::copy(word.begin(), word.end(), g_strBuf);
-
-
-		SerialMon.printf("[%s] [%d]\n", g_strBuf.c_str(), g_strBuf.length());
-
-		M5Cardputer.Display.clear();
-		M5.Display.setCursor(0, 0, 2);
-
-		M5Cardputer.Display.println(g_strBuf);
-
-		SerialMon.printf("%d %d [%s]\n", g_smsMode, g_strBuf.length(), g_strBuf.c_str());
-	} else if ((state.fn && M5Cardputer.Keyboard.isKeyPressed('s'))) {
-		g_smsMode = true;
-		// M5Cardputer.Display.clear();
-	} else {
 	}
+
+
 	M5Cardputer.Keyboard.updateKeysState();
 
 	// state.reset();

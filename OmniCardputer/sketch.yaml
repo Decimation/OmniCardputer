@@ -1,0 +1,2 @@
+default_fqbn: m5stack:esp32:m5stack_cardputer
+default_port: COM3

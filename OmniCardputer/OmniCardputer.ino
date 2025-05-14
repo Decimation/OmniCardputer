@@ -6,7 +6,8 @@
 
 
 // ReSharper disable CppDeclaratorNeverUsed
-#include <ArduinoHttpClient.h>
+// #include <ArduinoHttpClient.h>
+
 #include <M5Unit-CatM.h>
 #include <string>
 #define TINY_GSM_DEBUG SerialMon
@@ -18,7 +19,7 @@
 // #include <M5Utility.h>
 // #include <M5_SIM7080G.h>
 #include <M5Cardputer.h>
-
+#include <iterator>
 
 #ifdef DUMP_AT_COMMANDS
 #include <StreamDebugger.h>
@@ -28,43 +29,66 @@ TinyGsm        g_modem(g_dbg);
 TinyGsm g_modem(SerialAT);
 #endif
 
-IPAddress g_host{206, 196, 32, 11} PROGMEM;
+IPAddress g_host{206, 196, 32, 11};
 
 TinyGsmClient g_gsmClient(g_modem);
-HttpClient    g_http{g_gsmClient, g_host, 22000};
+// HttpClient    g_http{g_gsmClient, g_host, 22000};
 
 
 static bool g_smsMode = false;
 
 static const String g_myNumber{"6127876708"} PROGMEM;
 
-StringSumHelper g_strBuf{256};
+String g_strBuf{};
+
+/*template <typename Iterator>
+static void clear(Iterator sz, char v = '\0')
+{
+	for (auto c = sz.begin(); c != sz.end(); c++) {
+		*c = v;
+	}
+}*/
+
+void clear(String& sz, char v)
+{
+	for (int i = 0; i < sz.length(); i++) {
+		// sz[i] = v;
+		sz.setCharAt(i, v);
+	}
+}
 
 void setup()
 {
+	M5.begin();
+	M5.Power.begin();
+	g_strBuf.reserve(512);
+
 	SerialMon.begin(MONITOR_BAUDRATE);
 	SerialMon.println("Starting");
 
-	for (auto c = g_strBuf.begin(); c != g_strBuf.end(); c++) {
-		*c = '\0';
-	}
+	clear(g_strBuf, '\0');
 
 	delay(300);
 
 	auto cfg            = M5.config();
 	cfg.serial_baudrate = MONITOR_BAUDRATE;
+
 	M5Cardputer.begin(cfg, true);
 
 	SerialAT.begin(SIM7080_BAUDRATE, SERIAL_8N1, 1, 2);
 
 	M5Cardputer.Display.init();
 	M5Cardputer.Display.clear();
+	M5.Display.setCursor(0, 0, 2);
+
 
 	// M5Cardputer.Display.progressBar(0, 0, 100, 100, 0);
 
-	delay(300);
-	g_modem.restart();
+
+	// g_modem.restart();
 	g_modem.init();
+
+	delay(300);
 
 	auto info = g_modem.getModemInfo();
 	auto imei = g_modem.getIMEI();
@@ -103,9 +127,9 @@ void loop()
 {
 	M5Cardputer.update();
 	// const char* msg;
+	// buf = {};
 
-	auto state = M5Cardputer.Keyboard.keysState();
-
+	auto state    = M5Cardputer.Keyboard.keysState();
 	bool isChange = M5Cardputer.Keyboard.isChange();
 
 
@@ -115,26 +139,51 @@ void loop()
 
 		auto word = state.word;
 
-		g_strBuf.concat(word.data());
-		auto ss2 = String(g_strBuf);
-
-		M5Cardputer.Display.clear();
-
-		M5Cardputer.Display.drawString(ss2, 0, 0);
-
 		if (state.enter) {
 			// M5Cardputer.Display.clear();
 			// state.reset();
 
-			M5Cardputer.Display.drawString(ss2, 0, 0);
+			M5Cardputer.Display.println(g_strBuf);
+			// M5Cardputer.Display.println(buf);
 
-			g_modem.sendSMS(g_myNumber, ss2);
+			g_modem.sendSMS(g_myNumber, g_strBuf);
 
 			g_smsMode = false;
+			return;
 		} else {
 			// M5Cardputer.Display.clear();
 		}
-		SerialMon.printf("%d %d [%s]\n", g_smsMode, ss2.length(), ss2.c_str());
+
+		/*auto l = M5Cardputer.Keyboard.keyList();
+
+		for (auto k = l.begin(); k != l.end(); k++) {
+			auto kv = M5Cardputer.Keyboard.getKeyValue(*k);
+			if (M5Cardputer.Keyboard.isKeyPressed(kv.value_first)) {
+				g_strBuf.concat(kv.value_first);
+			}
+		}*/
+
+		if (!(word.size() >= 1)) {
+			return;
+		}
+
+		SerialMon.printf("[%p] [%s][%d]\n", word.data(), word.data(), word.size());
+
+		for (uint8_t i = 0; i < word.size(); i++) {
+			g_strBuf.concat(word[i]);
+		}
+
+		// std::copy(word.begin(), word.end(), g_strBuf);
+
+
+		SerialMon.printf("[%s] [%d]\n", g_strBuf.c_str(), g_strBuf.length());
+
+		M5Cardputer.Display.clear();
+		M5.Display.setCursor(0, 0, 2);
+
+		M5Cardputer.Display.println(g_strBuf);
+
+		SerialMon.printf("%d %d [%s]\n", g_smsMode, g_strBuf.length(), g_strBuf.c_str());
 	} else if ((state.fn && M5Cardputer.Keyboard.isKeyPressed('s'))) {
 		g_smsMode = true;
 		// M5Cardputer.Display.clear();

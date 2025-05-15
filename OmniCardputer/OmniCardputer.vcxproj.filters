@@ -21,12 +21,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OmniCardputer.ino" />
+    <ClCompile Include="MenuOption.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.OmniCardputer.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="__vm\OmniCardputer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuOption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

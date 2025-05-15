@@ -30,6 +30,26 @@ volatile bool LongPress     = false;*/
 
 keyStroke KeyStroke;*/
 
+
+
+
+/*template <typename Iterator>
+static void clear(Iterator sz, char v = '\0')
+{
+	for (auto c = sz.begin(); c != sz.end(); c++) {
+		*c = v;
+	}
+}*/
+
+#ifdef DUMP_AT_COMMANDS
+#include <StreamDebugger.h>
+StreamDebugger g_dbg(SerialAT, SerialMon);
+TinyGsm        g_modem(g_dbg);
+#else
+TinyGsm g_modem(SerialAT);
+#endif
+
+
 TaskHandle_t xHandle;
 
 // Public Globals Variables
@@ -41,33 +61,11 @@ TinyGsmClient g_gsmClient(g_modem);
 
 // HttpClient    g_http{g_gsmClient, g_host, 22000};
 
-
 Option g_optMode = Option::NONE;
 
 String g_myNumber{"6127876708"};
 
 String g_strBuf{};
-
-
-/*template <typename Iterator>
-static void clear(Iterator sz, char v = '\0')
-{
-	for (auto c = sz.begin(); c != sz.end(); c++) {
-		*c = v;
-	}
-}*/
-
-int char_to_int(const char c)
-{
-	return (int) c - 48;
-}
-void clear(String& sz, char v)
-{
-	for (int i = 0; i < sz.length(); i++) {
-		// sz[i] = v;
-		sz.setCharAt(i, v);
-	}
-}
 
 void setup()
 {

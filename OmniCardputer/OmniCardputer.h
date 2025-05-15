@@ -3,13 +3,14 @@
 
 #pragma once
 
-#define TINY_GSM_DEBUG SerialMon
-#define DUMP_AT_COMMANDS
-
+#include <string>
+#include <iterator>
+#include <functional>
 
 #include <M5Unit-CatM.h>
-#include <string>
 
+#define DUMP_AT_COMMANDS
+#define TINY_GSM_DEBUG SerialMon
 
 #include <TinyGsmClient.h>
 #include <M5GFX.h>
@@ -17,16 +18,13 @@
 // #include <M5Utility.h>
 // #include <M5_SIM7080G.h>
 #include <M5Cardputer.h>
-#include <iterator>
-#include <functional>
-#ifdef DUMP_AT_COMMANDS
-#include <StreamDebugger.h>
-class MenuOptionClass;
-StreamDebugger g_dbg(SerialAT, SerialMon);
-TinyGsm        g_modem(g_dbg);
-#else
-TinyGsm g_modem(SerialAT);
-#endif
+
+
+
+
+
+
+#include "Util.h"
 
 #include <esp_task.h>
 #include "esp_task_wdt.h"
@@ -80,12 +78,6 @@ struct TouchPoint
 	}
 };*/
 
-int char_to_int(const char c);
-
-
-
-
-
 
 
 enum class Option
@@ -110,6 +102,16 @@ extern volatile bool LongPress     = false;*/
 
 extern keyStroke KeyStroke;*/
 
+//extern StreamDebugger g_dbg;
+
+//#ifdef DUMP_AT_COMMANDS
+//#include <StreamDebugger.h>
+//extern StreamDebugger g_dbg;
+//
+//#else
+//#endif
+
+extern TinyGsm        g_modem;
 
 extern unsigned long previousMillis;
 
@@ -122,9 +124,10 @@ extern TinyGsmClient g_gsmClient;
 
 // HttpClient    g_http{g_gsmClient, g_host, 22000};
 
-
 extern Option g_optMode;
 
 extern String g_myNumber;
 
 extern String g_strBuf;
+
+

@@ -96,7 +96,6 @@
   <ItemGroup>
     <ClInclude Include="MenuOption.h" />
     <ClInclude Include="__vm\.OmniCardputer.vsarduino.h" />
-    <ClInclude Include="__vm\OmniCardputer.h" />
   </ItemGroup>
   <PropertyGroup>
     <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>

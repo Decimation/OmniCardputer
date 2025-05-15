@@ -29,7 +29,7 @@
     <ClInclude Include="__vm\.OmniCardputer.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="__vm\OmniCardputer.h">
+    <ClInclude Include="OmniCardputer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MenuOption.h">
